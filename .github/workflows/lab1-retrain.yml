@@ -1,0 +1,35 @@
+name: Lab 1 - Retrain model on push
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "lab1-github-actions/**"
+      - ".github/workflows/lab1-retrain.yml"
+
+jobs:
+  retrain:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: lab1-github-actions
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.14"
+
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt
+
+      - name: Generate a run timestamp
+        run: echo "timestamp=$(date '+%Y%m%d%H%M%S')" >> "$GITHUB_ENV"
+
+      - name: Train
+        run: python src/train_model.py --timestamp "$timestamp"
+
+      - name: Evaluate
+        run: python src/evaluate_model.py --timestamp "$timestamp"

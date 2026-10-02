@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - "lab1-github-actions/**"
+      - "!lab1-github-actions/**/*.md"
       - ".github/workflows/lab1-retrain.yml"
 
 defaults:

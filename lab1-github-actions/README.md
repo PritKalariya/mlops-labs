@@ -35,7 +35,7 @@ Every push to `main` that touches this folder runs [`lab1-retrain.yml`](../.gith
 | Push | Change to `PARAMS` | F1 | Decision | Run |
 |---|---|---|---|---|
 | First gated run | defaults | 0.9655 | promote (no champion yet) | [36962324197](https://github.com/PritKalariya/mlops-labs/actions/runs/36962324197) |
-| Demo 1 | `max_depth=1` | 0.9452 | block | [BLOCK_RUN_ID](https://github.com/PritKalariya/mlops-labs/actions/runs/BLOCK_RUN_ID) |
+| Demo 1 | `max_depth=1` | 0.9452 | block | [36962783433](https://github.com/PritKalariya/mlops-labs/actions/runs/36962783433) |
 | Demo 2 | back to defaults | 0.9655 | keep | [36963094376](https://github.com/PritKalariya/mlops-labs/actions/runs/36963094376) |
 | Demo 3 | `max_features=1` | 0.9660 | promote | [36963399460](https://github.com/PritKalariya/mlops-labs/actions/runs/36963399460) |
 

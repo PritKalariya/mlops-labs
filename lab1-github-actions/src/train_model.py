@@ -8,7 +8,7 @@ from sklearn.metrics import accuracy_score, f1_score
 from dataset import SEED, TEST_SIZE, load_split
 
 # Hyperparameters live in one place, so a change is a one-line diff.
-PARAMS = {"n_estimators": 100, "max_depth": None, "random_state": SEED}
+PARAMS = {"n_estimators": 100, "max_depth": 1, "random_state": SEED}
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

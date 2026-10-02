@@ -7,14 +7,33 @@ on:
       - "lab1-github-actions/**"
       - ".github/workflows/lab1-retrain.yml"
 
+defaults:
+  run:
+    working-directory: lab1-github-actions
+
 jobs:
+  test:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.14"
+
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt
+
+      - name: Run tests
+        run: python -m pytest -v
+
   retrain:
+    needs: test
     runs-on: ubuntu-24.04
     permissions:
       contents: write
-    defaults:
-      run:
-        working-directory: lab1-github-actions
     steps:
       - name: Check out the repo
         uses: actions/checkout@v7

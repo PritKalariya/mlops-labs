@@ -16,3 +16,6 @@ mlartifacts/
 lab1-github-actions/data/
 lab1-github-actions/model_*.joblib
 lab1-github-actions/*_metrics.json
+
+# Lab 2 model/
+lab2-fastapi/model/

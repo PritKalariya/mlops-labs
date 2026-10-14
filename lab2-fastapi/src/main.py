@@ -1,4 +1,5 @@
 import logging
+import time
 from contextlib import asynccontextmanager
 from typing import Literal
 
@@ -21,6 +22,16 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="Iris API", version="1.0.0", lifespan=lifespan)
+
+
+@app.middleware("http")
+async def handler_latency(request: Request, call_next):
+    """Handler latency only: excludes network, HTTP parsing, and time queued before the app."""
+    start = time.perf_counter()
+    response = await call_next(request)
+    elapsed_ms = (time.perf_counter() - start) * 1000
+    response.headers["X-Process-Time"] = f"{elapsed_ms:.3f}"
+    return response
 
 
 class IrisData(BaseModel):

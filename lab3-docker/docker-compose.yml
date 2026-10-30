@@ -1,0 +1,26 @@
+name: lab3-docker
+
+services:
+  api:
+    build:
+      context: .
+      target: runtime
+    image: lab3-api:local
+    ports:
+      # Loopback only: this is a lab, not something to expose on the LAN.
+      - "127.0.0.1:${HOST_PORT:-8000}:8080"
+    environment:
+      # The model is baked into the image; the real path is the default.
+      IRIS_ARTIFACT_URI: ${IRIS_ARTIFACT_URI:-file:///app/model/1.0.0/model.pkl}
+      IRIS_ARTIFACT_VERSION: ${IRIS_ARTIFACT_VERSION:-1.0.0}
+
+  smoke:
+    build:
+      context: .
+      target: smoke
+    image: lab3-smoke:local
+    depends_on:
+      api:
+        # Stricter than "started": the model is loaded and its checks passed.
+        condition: service_healthy
+    command: ["python", "loadtest.py", "--url", "http://api:8080/v1/predict", "-n", "200", "-c", "5"]

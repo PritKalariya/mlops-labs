@@ -1,0 +1,130 @@
+# Airflow 3.3.2, LocalExecutor, Postgres. Only the API server is published, and only on loopback.
+name: lab4-airflow
+
+x-airflow-common: &airflow-common
+  image: lab4-airflow:local
+  build:
+    context: .
+    dockerfile: Dockerfile
+  # Fixed uid so the bind-mounted logs, data and model dirs stay writable. Set it to `id -u`.
+  user: "${AIRFLOW_UID:-50000}:0"
+  env_file: .env
+  environment: &airflow-env
+    AIRFLOW__CORE__EXECUTOR: LocalExecutor
+    AIRFLOW__CORE__AUTH_MANAGER: airflow.providers.fab.auth_manager.fab_auth_manager.FabAuthManager
+    AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+    AIRFLOW__CORE__EXECUTION_API_SERVER_URL: http://airflow-apiserver:8080/execution/
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres/${POSTGRES_DB}
+    AIRFLOW__SCHEDULER__ENABLE_HEALTH_CHECK: "true"
+    AIRFLOW__API__WORKERS: "2"
+    PYTHONPATH: /opt/airflow/dags
+  volumes:
+    - ./dags:/opt/airflow/dags:ro
+    - ./data:/opt/airflow/data
+    - ./model:/opt/airflow/model
+    - ./tests:/opt/airflow/tests:ro
+    - ./logs:/opt/airflow/logs
+  depends_on:
+    postgres:
+      condition: service_healthy
+    airflow-init:
+      condition: service_completed_successfully
+
+services:
+  postgres:
+    image: postgres:16.15
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  airflow-init:
+    <<: *airflow-common
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+    command:
+      - bash
+      - -c
+      - |
+        set -euo pipefail
+        airflow db migrate
+        if airflow users list 2>/dev/null | grep -qw "$${_AIRFLOW_WWW_USER_USERNAME}"; then
+          echo "admin user already exists"
+        else
+          airflow users create \
+            --username "$${_AIRFLOW_WWW_USER_USERNAME}" \
+            --password "$${_AIRFLOW_WWW_USER_PASSWORD}" \
+            --firstname Lab --lastname Admin --role Admin --email admin@example.com
+        fi
+
+  # start_period is generous on purpose: on a 2-vCPU e2-medium the first start takes about 3 minutes,
+  # and failures inside start_period do not count, so `up --wait` does not give up early.
+  airflow-apiserver:
+    <<: *airflow-common
+    command: api-server
+    environment:
+      <<: *airflow-env
+      LAB4_SERVICE: apiserver
+    ports:
+      - "127.0.0.1:${AIRFLOW_PORT:-8080}:8080"
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8080/api/v2/version"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 240s
+    restart: unless-stopped
+
+  airflow-scheduler:
+    <<: *airflow-common
+    command: scheduler
+    environment:
+      <<: *airflow-env
+      LAB4_SERVICE: scheduler
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8974/health"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 240s
+    restart: unless-stopped
+
+  # DAG-level callbacks (notify_success) run here, not in the scheduler, so this service gets the
+  # same env as the scheduler, the smtp_gmail Connection included (both read env_file: .env).
+  airflow-dag-processor:
+    <<: *airflow-common
+    command: dag-processor
+    environment:
+      <<: *airflow-env
+      LAB4_SERVICE: dag-processor
+    healthcheck:
+      test: ["CMD-SHELL", 'airflow jobs check --job-type DagProcessorJob --hostname "$${HOSTNAME}"']
+      interval: 30s
+      timeout: 30s
+      retries: 5
+      start_period: 240s
+    restart: unless-stopped
+
+  # One-off commands: docker compose run --rm airflow-cli airflow dags list
+  # The entrypoint keeps the image's HOME setup, then runs whatever command follows.
+  airflow-cli:
+    <<: *airflow-common
+    profiles: ["cli"]
+    entrypoint: ["/usr/bin/dumb-init", "--", "/entrypoint", "bash", "-c", 'exec "$$@"', "--"]
+    environment:
+      <<: *airflow-env
+      LAB4_SERVICE: cli
+    command: ["airflow", "--help"]
+
+volumes:
+  postgres-db:

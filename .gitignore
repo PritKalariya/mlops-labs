@@ -19,3 +19,12 @@ lab1-github-actions/*_metrics.json
 
 # Lab 2 model/
 lab2-fastapi/model/
+
+# Lab 4 (Airflow): secrets and generated artifacts, regenerate by running the DAG
+lab4-airflow/.env
+lab4-airflow/logs/*
+lab4-airflow/data/*
+lab4-airflow/model/*
+!lab4-airflow/logs/.gitkeep
+!lab4-airflow/data/.gitkeep
+!lab4-airflow/model/.gitkeep

@@ -28,3 +28,10 @@ lab4-airflow/model/*
 !lab4-airflow/logs/.gitkeep
 !lab4-airflow/data/.gitkeep
 !lab4-airflow/model/.gitkeep
+
+# Lab 5 (Cloud Run): secrets-adjacent config, tooling env, generated model artifacts
+lab5-cloud-run/.env
+lab5-cloud-run/.venv/
+lab5-cloud-run/app/model/
+lab5-cloud-run/**/__pycache__/
+lab5-cloud-run/**/*.pkl

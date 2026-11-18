@@ -1,0 +1,10 @@
+.venv/
+.git/
+.gitignore
+__pycache__/
+*.py[cod]
+.env
+model/
+*.pkl
+*.joblib
+README.md

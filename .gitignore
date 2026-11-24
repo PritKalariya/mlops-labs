@@ -35,3 +35,12 @@ lab5-cloud-run/.venv/
 lab5-cloud-run/app/model/
 lab5-cloud-run/**/__pycache__/
 lab5-cloud-run/**/*.pkl
+
+# Lab 6 (Terraform): state, plans, local variable values, provider cache. Lock files and *.tfvars.example stay tracked.
+lab6-terraform/**/.terraform/
+lab6-terraform/**/*.tfstate
+lab6-terraform/**/*.tfstate.*
+lab6-terraform/**/.terraform.tfstate.lock.info
+lab6-terraform/**/*.tfplan
+lab6-terraform/**/terraform.tfvars
+lab6-terraform/**/crash.log
